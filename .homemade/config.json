@@ -1,0 +1,42 @@
+{
+  "$schema": "https://homemade.dev/schemas/config.json",
+  "size": "medium",
+  "warmup": [
+    "pnpm install --frozen-lockfile",
+    "pnpm build",
+    "node openclaw.mjs setup --baseline",
+    "node openclaw.mjs config set gateway.auth.mode none",
+    "node openclaw.mjs config set gateway.controlUi.allowedOrigins '[\"*\"]' --strict-json",
+    "node openclaw.mjs config set gateway.trustedProxies '[\"127.0.0.1\",\"::1\",\"10.0.0.0/8\",\"172.16.0.0/12\"]' --strict-json"
+  ],
+  "install": [
+    "pnpm install --frozen-lockfile",
+    "test -d dist || pnpm build",
+    "node openclaw.mjs setup --baseline",
+    "node openclaw.mjs config set gateway.auth.mode none",
+    "node openclaw.mjs config set gateway.controlUi.allowedOrigins '[\"*\"]' --strict-json",
+    "node openclaw.mjs config set gateway.trustedProxies '[\"127.0.0.1\",\"::1\",\"10.0.0.0/8\",\"172.16.0.0/12\"]' --strict-json"
+  ],
+  "services": {
+    "gateway": {
+      "displayName": "Gateway",
+      "cmd": "exec pnpm gateway:watch:raw --port 18789",
+      "port": 18789
+    },
+    "web": {
+      "displayName": "Control UI",
+      "cmd": "export OPENCLAW_UI_DEV_GATEWAY_URL=ws://127.0.0.1:18789; exec pnpm ui:dev",
+      "port": 5173,
+      "url": true,
+      "share": "owner",
+      "healthcheck": {
+        "path": "/"
+      },
+      "depends_on": {
+        "gateway": {
+          "condition": "healthy"
+        }
+      }
+    }
+  }
+}
